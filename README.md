@@ -44,3 +44,7 @@ Note that the schema covers document *structure*. The fspec tooling
 additionally validates NDS.Live semantics (layer types, attribute
 names, condition codes against the NDS.Live model) and cross-reference
 consistency, which no standalone JSON Schema can express.
+
+## License
+
+[BSD 3-Clause](LICENSE), © Navigation Data Standard e.V.
