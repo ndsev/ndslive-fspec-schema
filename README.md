@@ -2,17 +2,19 @@
 
 The normative JSON Schema (draft 2020-12) for **NDS.Live filling
 specification** documents. A filling spec is the contract between a
-map-data producer (*capability*) and a customer (*requirement*),
-expressed in NDS.Live schema vocabulary; this repository publishes the
+map-data producer and a customer, expressed in NDS.Live schema
+vocabulary — a producer's *catalog* of everything it can deliver, or a
+*product* derived from it for one customer; this repository publishes the
 machine-readable contract that every exported document's `$schema`
 points to, so any JSON Schema validator can check a filling spec
 without further tooling.
 
 ## Published versions
 
-| Format version | Schema |
-|---|---|
-| 0.2 | [`filling-spec-0.2.schema.json`](https://ndsev.github.io/ndslive-fspec-schema/filling-spec-0.2.schema.json) |
+| Format version | Schema | Notes |
+|---|---|---|
+| **0.3** (current) | [`filling-spec-0.3.schema.json`](https://ndsev.github.io/ndslive-fspec-schema/filling-spec-0.3.schema.json) | One specification per document (`productSpecification` at the top level) plus an optional `derivedFrom` link from a product to its catalog. |
+| 0.2 | [`filling-spec-0.2.schema.json`](https://ndsev.github.io/ndslive-fspec-schema/filling-spec-0.2.schema.json) | Two-part document (`specs.capability` / `specs.requirement`). Superseded; the fspec tooling migrates 0.2 files, splitting a two-part file into a catalog and a product. |
 
 Served via GitHub Pages under
 `https://ndsev.github.io/ndslive-fspec-schema/`.
@@ -37,7 +39,7 @@ Any draft 2020-12 validator works, e.g.:
 
 ```bash
 npx ajv-cli validate --spec=draft2020 \
-  -s filling-spec-0.2.schema.json -d my-filling-spec.json
+  -s filling-spec-0.3.schema.json -d my-filling-spec.json
 ```
 
 Note that the schema covers document *structure*. The fspec tooling
