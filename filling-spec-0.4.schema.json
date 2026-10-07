@@ -1,0 +1,630 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ndsev.github.io/ndslive-fspec-schema/filling-spec-0.4.schema.json",
+  "title": "NDS.Live Filling Specification",
+  "description": "Normative schema for NDS.Live filling specifications, format version 0.4. A document is one product specification: a provider's catalog of what it can deliver, or a product derived from such a catalog (what is delivered to, or asked for by, a customer). Which of the two a file is, is business context, not structure; an optional derivedFrom records the catalog a product was cut from. Changes over 0.3 (FSPEC-21): an optional origin on module, layer and attribute marks custom definitions that are not part of NDS.Live. Changes in 0.3 (FSPEC-14): the specs map with its capability/requirement parts is replaced by a single top-level productSpecification, and the optional derivedFrom linkage is added. Earlier changes: single fillingSpecVersion at the document level (FSPEC-2); validityRangeTypes uses exact NDS.Live validity enum member names (FSPEC-4); namespaced x-* extension objects on productSpecification, module, layer and attribute (REQ-EXT-01..05); optional attribute id (FSPEC-5).",
+  "type": "object",
+  "required": [
+    "fillingSpecVersion",
+    "productSpecification"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "URL of the JSON Schema this document conforms to. The tool stamps this on every export so external readers auto-find the schema."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Document wrapper version. Bumped when the outer wrapper shape changes; the format itself is versioned by fillingSpecVersion.",
+      "minimum": 1
+    },
+    "fillingSpecVersion": {
+      "$ref": "#/$defs/fillingSpecVersion",
+      "description": "The single, authoritative format version of this document."
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp recorded by the producing tool."
+    },
+    "derivedFrom": {
+      "type": "object",
+      "description": "Provenance link to the catalog this product specification was derived from (FSPEC-14). Optional and purely informational: it lets tools locate the baseline for comparison and records what the provider offered when the product was cut. Refers to the catalog by its productSpecification id and version.",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "productSpecification.id of the catalog."
+        },
+        "version": {
+          "type": "string",
+          "description": "productSpecification.version of the catalog at derivation time."
+        }
+      }
+    },
+    "productSpecification": {
+      "$ref": "#/$defs/productSpecification",
+      "description": "The one specification this document carries."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "fillingSpecVersion": {
+      "type": "string",
+      "description": "Schema-format version this document claims to conform to.",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?(-[A-Za-z0-9.+-]+)?$"
+    },
+    "lifetime": {
+      "type": "string",
+      "description": "NDS.Live DataLayerLifetimeType.",
+      "enum": [
+        "STATIC",
+        "DYNAMIC",
+        "LIVE"
+      ]
+    },
+    "yesNo": {
+      "type": "string",
+      "enum": [
+        "YES",
+        "NO"
+      ]
+    },
+    "yesNoNa": {
+      "type": "string",
+      "enum": [
+        "YES",
+        "NO",
+        "N/A"
+      ]
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "nds",
+        "custom"
+      ],
+      "default": "nds",
+      "description": "Where the definition comes from (FSPEC-21): \"nds\" — the official NDS.Live specification, checked against its catalog; \"custom\" — a company- or organization-specific extension, not part of NDS.Live, which tools must not report as unknown. Absent means \"nds\". On a module it also covers the module's layers unless a layer says otherwise."
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Vendor extension container (REQ-EXT-01..05). Keys are vendor namespaces matching ^x-[a-z][a-z0-9-]*$ (e.g. x-here, x-tomtom, x-customer-xyz). Values are opaque to the common schema; vendors bring their own validation. Tools MUST preserve extensions verbatim across import/export (REQ-EXT-04).",
+      "propertyNames": {
+        "pattern": "^x-[a-z][a-z0-9-]*$"
+      },
+      "additionalProperties": true
+    },
+    "productSpecification": {
+      "type": "object",
+      "description": "Envelope for one filling spec instance.",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable identifier (slug or URN-ish). e.g. nds.live.demo.isa_map."
+        },
+        "version": {
+          "type": "string",
+          "description": "Spec instance version (semver-ish). e.g. 1.0.0-draft."
+        },
+        "description": {
+          "type": "string"
+        },
+        "dataLifetime": {
+          "$ref": "#/$defs/lifetime",
+          "description": "Default lifetime for the document. Per-layer lifetime overrides this."
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/feature"
+          }
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/module"
+          }
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/attribute"
+          }
+        },
+        "smartLayers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/smartLayer"
+          }
+        },
+        "legalInformation": {
+          "$ref": "#/$defs/legalInformation"
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "modules": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/dependencyModule"
+              }
+            }
+          }
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      }
+    },
+    "feature": {
+      "type": "object",
+      "description": "Product capability a customer talks about (e.g. Lane Groups (HD), Roads / Intersection).",
+      "additionalProperties": false,
+      "properties": {
+        "feature": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "description": "NDS tile level. May be a range like \"1-14\" or a comma list."
+        },
+        "coverage": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "layerIds": {
+          "type": "array",
+          "items": {
+            "type": [
+              "string",
+              "integer"
+            ]
+          },
+          "description": "Layer ids (within the same spec) that compose this feature (REQ-FEAT-02)."
+        }
+      }
+    },
+    "module": {
+      "type": "object",
+      "description": "NDS module wrapper grouping layers. version is the module-default; per-layer overrides ride on the layer itself.",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "description": "Module default version (e.g. 2026.01)."
+        },
+        "origin": {
+          "$ref": "#/$defs/origin",
+          "description": "Whether this module is part of NDS.Live or a custom extension; inherited by its layers."
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/layer"
+          }
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      }
+    },
+    "layer": {
+      "type": "object",
+      "description": "A data layer produced or required. id is the user-facing DataLayerId, unique within the enclosing spec.",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "description": "User-facing DataLayerId; the ID referenced from smartLayers.dataLayers and features.layerIds."
+        },
+        "description": {
+          "type": "string"
+        },
+        "layerType": {
+          "type": "string",
+          "description": "Fully qualified NDS.Live layer-struct name, e.g. rules.layer.LaneRulesLayer."
+        },
+        "origin": {
+          "$ref": "#/$defs/origin",
+          "description": "Whether this layer type is part of NDS.Live or custom; defaults to the enclosing module's origin."
+        },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "NDS tile levels at which the layer is provided."
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Attributes this layer carries, referencing attributes[] by id when the definition has one, else by name (FSPEC-5)."
+        },
+        "lifetime": {
+          "$ref": "#/$defs/lifetime"
+        },
+        "container": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "Tiles",
+              "Objects",
+              "Paths",
+              "Mesh"
+            ]
+          }
+        },
+        "primaryContainer": {
+          "type": "string",
+          "description": "Which of the listed containers is the primary delivery container."
+        },
+        "moduleVersions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Module-version stamps for this layer (e.g. \"rules 2026.01\"). The first entry implies the layer's owning module/version."
+        },
+        "deliveryMethod": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "service",
+                "filestore"
+              ]
+            },
+            "serviceRef": {
+              "type": "string",
+              "description": "smartLayer.id of the service when type is service."
+            }
+          }
+        },
+        "compression": {
+          "type": "string",
+          "description": "Per-layer NDS.Live compression algorithm (e.g. zstd, gzip, none)."
+        },
+        "signature": {
+          "type": "string",
+          "description": "Per-layer NDS.Live signature algorithm (e.g. SHA-256, none)."
+        },
+        "encryption": {
+          "type": "string",
+          "description": "Per-layer NDS.Live encryption algorithm (e.g. AES-256, none)."
+        },
+        "customRequirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/customRequirement"
+          }
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      }
+    },
+    "attribute": {
+      "type": "object",
+      "description": "Per-attribute definition. layer.attributes[] entries reference an attribute by its id when present, else by name (FSPEC-5): giving two definitions of the same NDS attribute name distinct ids lets different layers carry different definitions (e.g. PROHIBITED_PASSAGE with different conditions on road vs lane layers).",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Optional stable key, unique within the spec (FSPEC-5). When present, layers reference this id; when absent, the attribute is referenced by name."
+        },
+        "name": {
+          "type": "string"
+        },
+        "origin": {
+          "$ref": "#/$defs/origin",
+          "description": "Whether this attribute type is part of NDS.Live or custom."
+        },
+        "featureAssignment": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "markets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "coverage": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "validityRangeTypes": {
+          "type": "array",
+          "description": "NDS.Live validity types, exact member names (FSPEC-4). Superset of RoadValidityType, LaneValidityType, RoadLocationRangeValidityType and DrivePathValidityType. Not every value is valid for every feature type; context-invalid values are flagged by the semantic validator (FSPEC-3), never rejected here.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "COMPLETE",
+              "NONE",
+              "POSITION",
+              "LENGTH",
+              "GEOMETRY",
+              "GEOMETRY_OFFSET",
+              "PERCENTAGE",
+              "EXTENT",
+              "RANGE"
+            ]
+          }
+        },
+        "directedAttribution": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "NDS ConditionTypeCode member names (exact, no dot-notation sub-values — REQ-TERM-03)."
+        },
+        "conditionDetails": {
+          "type": "object",
+          "description": "Optional sub-value detail per condition type (REQ-TERM-03 keeps these out of the type names): keys are ConditionTypeCode names that also appear in conditions[]; values are the selected sub-value names of that condition's value enum (e.g. WEATHER: [\"SNOW\", \"ICE\"]). Tools may render them dotted (WEATHER.SNOW) for display.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "NDS property type member names (CorePropertyType or module PropertyType)."
+        },
+        "occurrence": {
+          "type": "string",
+          "enum": [
+            "ONCE",
+            "MULTIPLE"
+          ]
+        },
+        "mandatory": {
+          "$ref": "#/$defs/yesNo"
+        },
+        "allowOverlaps": {
+          "$ref": "#/$defs/yesNo"
+        },
+        "allowedValues": {
+          "type": "string",
+          "description": "Enum value list or numeric range. Unit goes in the unit field."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Measurement unit for numeric allowedValues. e.g. km/h, m, %."
+        },
+        "lifetime": {
+          "$ref": "#/$defs/lifetime"
+        },
+        "hasRegionalDefault": {
+          "$ref": "#/$defs/yesNoNa"
+        },
+        "regionalDefaultLayer": {
+          "type": "string",
+          "description": "Layer providing the regional default when hasRegionalDefault is YES."
+        },
+        "relatedAttributes": {
+          "type": "string"
+        },
+        "qualityIndicators": {
+          "type": "string"
+        },
+        "customRequirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/customRequirement"
+          }
+        },
+        "extensions": {
+          "$ref": "#/$defs/extensions"
+        }
+      }
+    },
+    "customRequirement": {
+      "type": "object",
+      "description": "Free-form Markdown requirement section. Image references inside the text use ![alt](attachment://N) where N matches an attachment.id within the same array.",
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "attachments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/attachment"
+          }
+        }
+      }
+    },
+    "attachment": {
+      "type": "object",
+      "description": "Embedded binary (base64 inline). Future revisions may swap base64 for sidefile URLs while keeping the same attachment://id indirection in text.",
+      "required": [
+        "id",
+        "filename",
+        "contentType",
+        "data"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Local identifier referenced by attachment://id markers in the parent requirement text."
+        },
+        "filename": {
+          "type": "string"
+        },
+        "contentType": {
+          "type": "string",
+          "description": "MIME type, e.g. image/png."
+        },
+        "data": {
+          "type": "string",
+          "contentEncoding": "base64"
+        }
+      }
+    },
+    "smartLayer": {
+      "type": "object",
+      "description": "Named delivery service referenced from layer.deliveryMethod.serviceRef.",
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Human identifier, e.g. SmartLayerTileService-1."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "tile",
+            "object",
+            "path",
+            "mesh"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "dataLayers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "integer"
+                ],
+                "description": "References a layer.id in the same spec."
+              }
+            }
+          }
+        }
+      }
+    },
+    "dependencyModule": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "minVersion": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "documentationUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "transitive"
+          ]
+        }
+      }
+    },
+    "legalInformation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "copyright": {
+          "type": "string"
+        },
+        "providerName": {
+          "type": "string"
+        },
+        "contentName": {
+          "type": "string"
+        },
+        "contentVersion": {
+          "type": "string"
+        },
+        "contentTimestamp": {
+          "type": "string"
+        },
+        "licenses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "text": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

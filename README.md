@@ -13,7 +13,8 @@ without further tooling.
 
 | Format version | Schema | Notes |
 |---|---|---|
-| **0.3** (current) | [`filling-spec-0.3.schema.json`](https://ndsev.github.io/ndslive-fspec-schema/filling-spec-0.3.schema.json) | One specification per document (`productSpecification` at the top level) plus an optional `derivedFrom` link from a product to its catalog. |
+| **0.4** (current) | [`filling-spec-0.4.schema.json`](https://ndsev.github.io/ndslive-fspec-schema/filling-spec-0.4.schema.json) | As 0.3, plus an optional `origin` (`"nds"` / `"custom"`) on modules, layers and attributes that marks company-specific extensions not part of NDS.Live. A layer takes its module's origin unless it sets its own. |
+| 0.3 | [`filling-spec-0.3.schema.json`](https://ndsev.github.io/ndslive-fspec-schema/filling-spec-0.3.schema.json) | One specification per document (`productSpecification` at the top level) plus an optional `derivedFrom` link from a product to its catalog. Superseded; 0.3 files are valid 0.4 content and are upgraded by changing the version. |
 | 0.2 | [`filling-spec-0.2.schema.json`](https://ndsev.github.io/ndslive-fspec-schema/filling-spec-0.2.schema.json) | Two-part document (`specs.capability` / `specs.requirement`). Superseded; the fspec tooling migrates 0.2 files, splitting a two-part file into a catalog and a product. |
 
 Served via GitHub Pages under
@@ -39,7 +40,7 @@ Any draft 2020-12 validator works, e.g.:
 
 ```bash
 npx ajv-cli validate --spec=draft2020 \
-  -s filling-spec-0.3.schema.json -d my-filling-spec.json
+  -s filling-spec-0.4.schema.json -d my-filling-spec.json
 ```
 
 Note that the schema covers document *structure*. The fspec tooling
